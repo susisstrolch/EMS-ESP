@@ -1244,11 +1244,9 @@ void _process_RCPLUSStatusMessage(_EMS_RxTelegram * EMS_RxTelegram) {
         EMS_Thermostat.curr_roomTemp     = _toShort(EMS_OFFSET_RCPLUSStatusMessage_curr);    // value is * 10
         EMS_Thermostat.setpoint_roomTemp = _toByte(EMS_OFFSET_RCPLUSStatusMessage_setpoint); // value is * 2
 
-        EMS_Thermostat.day_mode = _bitRead(EMS_OFFSET_RCPLUSGet_mode_day, 1); // get day mode flag
-
-        // room night setpoint is _toByte(2) (value is *2)
-        // boiler set temp is _toByte(4) (value is *2)
-        // day night is byte(8), 0x01 for night, 0x00 for day
+        EMS_Thermostat.day_mode = _bitRead(EMS_OFFSET_RCPLUSGet_mode_day, 2); // get day mode flag
+        //EMS_Thermostat.mode = _bitRead(EMS_OFFSET_RCPLUSGet_mode_day, 1);
+        
     }
 
     // actual set point

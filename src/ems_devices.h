@@ -105,7 +105,7 @@
 #define EMS_TYPE_RCPLUSSet 0x01B9                 // setpoint temp message
 #define EMS_OFFSET_RCPLUSStatusMessage_setpoint 3 // setpoint temp
 #define EMS_OFFSET_RCPLUSStatusMessage_curr 0     // current temp
-#define EMS_OFFSET_RCPLUSGet_mode_day 8           // day/night mode
+#define EMS_OFFSET_RCPLUSGet_mode_day 10          // day/night mode
 #define EMS_OFFSET_RCPLUSSet_mode 0	              // operation mode	(Auto=xFF, Manual=x00)
 #define EMS_OFFSET_RCPLUSSet_temp_comfort3 1	  // comfort3 level		
 #define EMS_OFFSET_RCPLUSSet_temp_comfort2 2	  // comfort2 level		
