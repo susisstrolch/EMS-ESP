@@ -494,14 +494,24 @@ void showInfo() {
                     EMS_Thermostat.month,
                     EMS_Thermostat.year + 2000);
 
-            if (EMS_Thermostat.mode == 0) {
-                myDebug("  Mode is set to low");
-            } else if (EMS_Thermostat.mode == 1) {
-                myDebug("  Mode is set to manual");
-            } else if (EMS_Thermostat.mode == 2) {
-                myDebug("  Mode is set to auto");
+
+            if (ems_getThermostatModel() == EMS_MODEL_RC310) {
+                if (EMS_Thermostat.mode == 0) {
+                    myDebug("  Mode is set to manual");
+                } else {
+                    myDebug("  Mode is set to auto" );
+                } //else {
+                  // myDebug("  Mode is set to ?");
             } else {
-                myDebug("  Mode is set to ?");
+                if (EMS_Thermostat.mode == 0) {
+                    myDebug("  Mode is set to low");
+                } else if (EMS_Thermostat.mode == 1) {
+                    myDebug("  Mode is set to manual");
+                } else if (EMS_Thermostat.mode == 2) {
+                    myDebug("  Mode is set to auto");
+                } else {
+                    myDebug("  Mode is set to ?");
+                }
             }
         }
     }
@@ -718,6 +728,13 @@ void publishValues(bool force) {
             } else {
                 rootThermostat[THERMOSTAT_MODE] = "auto";
             }
+        //RC300 has different mode settings    
+        } else if (ems_getThermostatModel() == EMS_MODEL_RC310) {
+             if (EMS_Thermostat.mode == 0) {
+                rootThermostat[THERMOSTAT_MODE] = "manual";
+            } else {
+                rootThermostat[THERMOSTAT_MODE] = "auto";
+            }    
         } else {
             if (EMS_Thermostat.mode == 0) {
                 rootThermostat[THERMOSTAT_MODE] = "night";

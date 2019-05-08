@@ -100,12 +100,19 @@
 
 // RC1010, RC310 and RC300 specific (EMS Plus)
 #define EMS_TYPE_RCPLUSStatusMessage 0x01A5       // is an automatic thermostat broadcast giving us temps
-#define EMS_TYPE_RCPLUSStatusHeating 0x01B9       // heating mode
+//#define EMS_TYPE_RCPLUSStatusHeating 0x03         // heating mode
 #define EMS_TYPE_RCPLUSStatusMode 0x1AF           // summer/winter mode
-#define EMS_TYPE_RCPLUSSet 0x03                   // setpoint temp message
+#define EMS_TYPE_RCPLUSSet 0x01B9                 // setpoint temp message
 #define EMS_OFFSET_RCPLUSStatusMessage_setpoint 3 // setpoint temp
 #define EMS_OFFSET_RCPLUSStatusMessage_curr 0     // current temp
 #define EMS_OFFSET_RCPLUSGet_mode_day 8           // day/night mode
+#define EMS_OFFSET_RCPLUSSet_mode 0	              // operation mode	(Auto=xFF, Manual=x00)
+#define EMS_OFFSET_RCPLUSSet_temp_comfort3 1	  // comfort3 level		
+#define EMS_OFFSET_RCPLUSSet_temp_comfort2 2	  // comfort2 level		
+#define EMS_OFFSET_RCPLUSSet_temp_comfort1 3	  // comfort1 level		
+#define EMS_OFFSET_RCPLUSSet_temp_eco 4	          //  eco level		
+
+
 
 // Junkers FR10 (EMS Plus)
 #define EMS_TYPE_FR10StatusMessage 0x6F         // is an automatic thermostat broadcast giving us temps

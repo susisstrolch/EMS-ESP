@@ -87,8 +87,7 @@ void _process_EasyStatusMessage(_EMS_RxTelegram * EMS_RxTelegram);
 // RC1010, RC300, RC310
 void _process_RCPLUSStatusMessage(_EMS_RxTelegram * EMS_RxTelegram);
 void _process_RCPLUSSetMessage(_EMS_RxTelegram * EMS_RxTelegram);
-void _process_RCPLUSStatusHeating(_EMS_RxTelegram * EMS_RxTelegram);
-void _process_RCPLUSStatusHeating(_EMS_RxTelegram * EMS_RxTelegram);
+//void _process_RCPLUSStatusHeating(_EMS_RxTelegram * EMS_RxTelegram);
 void _process_RCPLUSStatusMode(_EMS_RxTelegram * EMS_RxTelegram);
 
 // Junkers FR10
@@ -163,7 +162,7 @@ const _EMS_Type EMS_Types[] = {
     // Nefit 1010, RC300, RC310 (EMS Plus)
     {EMS_MODEL_ALL, EMS_TYPE_RCPLUSStatusMessage, "RCPLUSStatusMessage", _process_RCPLUSStatusMessage},
     {EMS_MODEL_ALL, EMS_TYPE_RCPLUSSet, "RCPLUSSetMessage", _process_RCPLUSSetMessage},
-    {EMS_MODEL_ALL, EMS_TYPE_RCPLUSStatusHeating, "RCPLUSStatusHeating", _process_RCPLUSStatusHeating},
+    //{EMS_MODEL_ALL, EMS_TYPE_RCPLUSStatusHeating, "RCPLUSStatusHeating", _process_RCPLUSStatusHeating},
     {EMS_MODEL_ALL, EMS_TYPE_RCPLUSStatusMode, "RCPLUSStatusMode", _process_RCPLUSStatusMode},
 
     // Junkers FR10
@@ -1292,10 +1291,15 @@ void _process_FR10StatusMessage(_EMS_RxTelegram * EMS_RxTelegram) {
 }
 
 /**
- * to complete....
+ * type 0x01B9 EMS+ for reading the mode from RC300/RC310 thermostat
  */
 void _process_RCPLUSSetMessage(_EMS_RxTelegram * EMS_RxTelegram) {
-    // to complete
+    EMS_Thermostat.mode = _toByte(EMS_OFFSET_RCPLUSSet_mode);
+    EMS_Thermostat.daytemp     = _toByte(EMS_OFFSET_RCPLUSSet_temp_comfort2);     // is * 2
+    EMS_Thermostat.nighttemp   = _toByte(EMS_OFFSET_RCPLUSSet_temp_eco);   // is * 2
+  
+    EMS_Sys_Status.emsRefreshed = true; // triggers a send the values back via MQTT
+
 }
 
 /**
@@ -2158,6 +2162,9 @@ void ems_setThermostatMode(uint8_t mode) {
     } else if ((model_id == EMS_MODEL_RC35) || (model_id == EMS_MODEL_ES73)) {
         EMS_TxTelegram.type   = (hc == 2) ? EMS_TYPE_RC35Set_HC2 : EMS_TYPE_RC35Set_HC1;
         EMS_TxTelegram.offset = EMS_OFFSET_RC35Set_mode;
+    } else if (model_id == EMS_MODEL_RC310) {
+        EMS_TxTelegram.type = EMS_TYPE_RCPLUSSet;
+        EMS_TxTelegram.offset = EMS_OFFSET_RCPLUSSet_mode;
     }
 
     EMS_TxTelegram.type_validate      = EMS_TxTelegram.type; // callback to EMS_TYPE_RC30Temperature to fetch temps
