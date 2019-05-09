@@ -103,6 +103,7 @@ typedef struct {
     uint8_t                 dest;
     uint16_t                type;
     uint8_t                 offset;
+    uint16_t                ems_plus_type;      // for EMS+, real type is in the Databytes, type is then >=F0 
     uint8_t                 length;             // full length of complete telegram
     uint8_t                 dataValue;          // value to validate against
     uint16_t                type_validate;      // type to call after a successful Write command
@@ -134,6 +135,7 @@ const _EMS_TxTelegram EMS_TX_TELEGRAM_NEW = {
     EMS_ID_NONE,          // dest
     EMS_ID_NONE,          // type
     0,                    // offset
+    EMS_ID_NONE,          // ems_plus_type
     0,                    // length
     0,                    // data value
     EMS_ID_NONE,          // type_validate
