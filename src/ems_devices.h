@@ -17,6 +17,11 @@
  */
 #define EMS_TYPE_Version 0x02
 
+/* 
+ * EMS+ extension type
+ */
+#define EMS_PLUS_TYPE_FF 0xFF
+
 /*
  * Boiler...
  */
