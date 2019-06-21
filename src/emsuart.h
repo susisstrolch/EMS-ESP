@@ -29,5 +29,5 @@ typedef struct {
 void ICACHE_FLASH_ATTR emsuart_init();
 void ICACHE_FLASH_ATTR emsuart_stop();
 void ICACHE_FLASH_ATTR emsuart_start();
-void ICACHE_FLASH_ATTR emsuart_tx_buffer(uint8_t * buf, uint8_t len);
+uint32_t ICACHE_FLASH_ATTR emsuart_tx_buffer(uint8_t * buf, uint8_t len);
 void ICACHE_FLASH_ATTR emsuart_tx_poll();

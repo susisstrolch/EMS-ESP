@@ -577,7 +577,8 @@ void _ems_sendTelegram() {
 
     // if we're in raw mode just fire and forget
     if (EMS_TxTelegram.action == EMS_TX_TELEGRAM_RAW) {
-        if (EMS_Sys_Status.emsLogging != EMS_SYS_LOGGING_NONE) {
+//        if (EMS_Sys_Status.emsLogging != EMS_SYS_LOGGING_NONE) {
+        if (true) {
             _EMS_RxTelegram EMS_RxTelegram;                   // create new Rx object
             EMS_RxTelegram.length    = EMS_TxTelegram.length; // full length of telegram
             EMS_RxTelegram.telegram  = EMS_TxTelegram.data;
@@ -586,7 +587,13 @@ void _ems_sendTelegram() {
         }
 
         EMS_TxTelegram.data[EMS_TxTelegram.length - 1] = _crcCalculator(EMS_TxTelegram.data, EMS_TxTelegram.length); // add the CRC
-        emsuart_tx_buffer(EMS_TxTelegram.data, EMS_TxTelegram.length);                                               // send the telegram to the UART Tx
+ 
+        uint32_t status = emsuart_tx_buffer(EMS_TxTelegram.data, EMS_TxTelegram.length);                                               // send the telegram to the UART Tx
+        if ((status & 0xff) == EMS_TX_TELEGRAM_TIMEOUT)
+            myDebug_P(PSTR(COLOR_BRIGHT_RED "_ems_sendTelegram_raw: Tx timed out [%d]!" COLOR_WHITE), status >> 8);
+        if ((status & 0xff) == EMS_TX_TELEGRAM_BRK_RCV)
+            myDebug_P(PSTR(COLOR_BRIGHT_RED "_ems_sendTelegram_raw: BRK from EMS Busmaster [%d,%d]!" COLOR_WHITE), (status >> 8) & 0xff, EMS_TX_TELEGRAM_TO_COUNT - (status >> 16));
+
         EMS_TxQueue.shift();                                                                                         // and remove from queue
         return;
     }
@@ -613,11 +620,13 @@ void _ems_sendTelegram() {
     }
     // finally calculate CRC and add it to the end
     uint8_t crc                                    = _crcCalculator(EMS_TxTelegram.data, EMS_TxTelegram.length);
+    char s[64] = {0};
+
     EMS_TxTelegram.data[EMS_TxTelegram.length - 1] = crc;
 
     // print debug info
-    if (EMS_Sys_Status.emsLogging == EMS_SYS_LOGGING_VERBOSE) {
-        char s[64] = {0};
+//    if (EMS_Sys_Status.emsLogging == EMS_SYS_LOGGING_VERBOSE) {
+      if (true) {
         if (EMS_TxTelegram.action == EMS_TX_TELEGRAM_WRITE) {
             snprintf(s, sizeof(s), "Sending write of type 0x%02X to 0x%02X:", EMS_TxTelegram.type, EMS_TxTelegram.dest & 0x7F);
         } else if (EMS_TxTelegram.action == EMS_TX_TELEGRAM_READ) {
@@ -633,9 +642,15 @@ void _ems_sendTelegram() {
         _debugPrintTelegram(s, &EMS_RxTelegram, COLOR_CYAN);
     }
 
-    // send the telegram to the UART Tx
-    emsuart_tx_buffer(EMS_TxTelegram.data, EMS_TxTelegram.length);
-
+    // we should introduce a error handling for failed transmit
+    // EMS_TX_TELEGRAM_TIMEOUT: set listen_mode on, discard
+    // EMS_TX_TELEGRAM_BRK_RCV: try to retransmit
+    //
+    uint32_t status = emsuart_tx_buffer(EMS_TxTelegram.data, EMS_TxTelegram.length);
+    if ((status & 0xff) == EMS_TX_TELEGRAM_TIMEOUT)
+        myDebug_P(PSTR(COLOR_BRIGHT_RED "_ems_sendTelegram: Tx timed out [%d]!" COLOR_WHITE), status >> 8);
+    if ((status & 0xff) == EMS_TX_TELEGRAM_BRK_RCV)
+        myDebug_P(PSTR(COLOR_BRIGHT_RED "_ems_sendTelegram: BRK from EMS Busmaster [%d,%d]!" COLOR_WHITE), (status >> 8) & 0xff, EMS_TX_TELEGRAM_TO_COUNT - (status >> 16));
     EMS_Sys_Status.emsTxStatus = EMS_TX_STATUS_WAIT;
 }
 
@@ -698,6 +713,7 @@ void ems_parseTelegram(uint8_t * telegram, uint8_t length) {
     EMS_RxTelegram.timestamp = millis();
     EMS_RxTelegram.length    = length;
 
+
     // check if we just received a single byte
     // it could well be a Poll request from the boiler for us, which will have a value of 0x8B (0x0B | 0x80)
     // or either a return code like 0x01 or 0x04 from the last Write command
@@ -707,6 +723,7 @@ void ems_parseTelegram(uint8_t * telegram, uint8_t length) {
         // check first for a Poll for us
         // the poll has the MSB set - seems to work on both EMS and Junkers
         if ((value & 0x7F) == EMS_ID_ME) {
+            myDebug_P(PSTR(COLOR_CYAN "ems_parseTelegram: poll us" COLOR_WHITE));
             EMS_Sys_Status.emsTxCapable     = true;
             uint32_t timenow_microsecs      = micros();
             EMS_Sys_Status.emsPollFrequency = (timenow_microsecs - _last_emsPollFrequency);
@@ -718,19 +735,24 @@ void ems_parseTelegram(uint8_t * telegram, uint8_t length) {
                 _ems_sendTelegram(); // perform the read/write command immediately
             } else {
                 // nothing to send so just send a poll acknowledgement back
-                if (EMS_Sys_Status.emsPollEnabled) {
+                myDebug_P(PSTR(COLOR_CYAN "ems_parseTelegram: emsuart_tx_poll()" COLOR_WHITE));
+                emsuart_tx_poll();
+
+/*                if (EMS_Sys_Status.emsPollEnabled) {
                     emsuart_tx_poll();
                 }
-            }
+*/            }
         } else if (EMS_Sys_Status.emsTxStatus == EMS_TX_STATUS_WAIT) {
             // this may be a single byte 01 (success) or 04 (error) from a recent write command?
             if (value == EMS_TX_SUCCESS) {
+            myDebug_P(PSTR(COLOR_CYAN "ems_parseTelegram: EMS_TX_SUCCESS" COLOR_WHITE));
                 EMS_Sys_Status.emsTxPkgs++;
                 // got a success 01. Send a validate to check the value of the last write
                 emsuart_tx_poll(); // send a poll to free the EMS bus
                 _createValidate(); // create a validate Tx request (if needed)
             } else if (value == EMS_TX_ERROR) {
                 // last write failed (04), delete it from queue and dont bother to retry
+                myDebug_P(PSTR(COLOR_CYAN "ems_parseTelegram: EMS_TX_ERROR" COLOR_WHITE));
                 if (EMS_Sys_Status.emsLogging == EMS_SYS_LOGGING_VERBOSE) {
                     myDebug_P(PSTR("** Write command failed from host"));
                 }
